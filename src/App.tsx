@@ -5,46 +5,36 @@ import WeatherBlock from './WeatherBlock';
 
 const App = () => {
   const citiesList = ['ottawa', 'moscow', 'tokyo'];
-  const [city, setCity] = useState(citiesList[0]);
-  const [dataToday, setDataToday] = useState<Weather>();
-  const [data, setData] = useState<Weather[]>();
+  const [currentCity, setCurrentCity] = useState<string>(citiesList[0]);
+  const [forecastData, setForecastData] = useState<Weather[]>();
 
   useEffect(() => {
-    const fetchData = async () => {
-      await fetch(`${process.env.REACT_APP_WEATHER_URL}/weather?q=${city}&units=metric&appid=${process.env.REACT_APP_WEATHER_API_KEY}`)
-        .then(res => res.json())
-        .then(result => setDataToday(result));
-    }
-    fetchData();
-  }, [city]);
+    let forecastData = [];
+    const forecastEndpoints = [`${process.env.REACT_APP_WEATHER_URL}/weather?q=${currentCity}&units=metric&appid=${process.env.REACT_APP_WEATHER_API_KEY}`, `${process.env.REACT_APP_WEATHER_URL}/forecast?q=${currentCity}&units=metric&appid=${process.env.REACT_APP_WEATHER_API_KEY}`];
 
-  const fetchWeather = async (selectedCity: string) => {
-    await fetch(`${process.env.REACT_APP_WEATHER_URL}/forecast?q=${selectedCity}&units=metric&appid=${process.env.REACT_APP_WEATHER_API_KEY}`)
-      .then(res => res.json())
-      .then(result => {
-        const dailyForecast = result.list.filter((forecast: any) => forecast.dt_txt.includes('12:00:00')).slice(0, 4);
-        setData(dailyForecast);
-      });
-    setCity(selectedCity);
-  }
+    const getForecast = async () => {
+      const [todayForecast, weeklyForecast] = await Promise.all(forecastEndpoints.map((endpoint) => fetch(endpoint).then((res) => res.json())));
+      const dailyForecast = weeklyForecast.list.filter((forecast: any) => forecast.dt_txt.includes('12:00:00')).slice(0, 4);
+
+      setForecastData([todayForecast, ...dailyForecast]);
+    }
+    getForecast();
+  }, [currentCity]);
 
   return (
     <div className="App">
       <div className='tabs'>
         {citiesList.length !== 0 && citiesList.map((city) => (
-          <div className="tabs__text" onClick={() => fetchWeather(city)}>{city}</div>
+          <div className={`tabs__text ${city === currentCity && 'tabs__text--selected'}`} onClick={() => setCurrentCity(city)}>{city}</div>
         ))}
       </div>
-      {data && (
-        <div className='grid'>
-          {dataToday && (
-            <div className="grid-child">
-              <WeatherBlock date={dataToday.dt} icon={dataToday.weather[0].icon} temperature={dataToday.main.temp} />
-            </div>
-          )}
-          {data.length !== 0 && data.map((weather) =>
-            <WeatherBlock date={weather.dt} icon={weather.weather[0].icon} temperature={weather.main.temp} />
-          )}
+      {forecastData && (
+        <div className='grid-container'>
+          <div className='grid'>
+            {forecastData.length !== 0 && forecastData.map((weather) =>
+              <WeatherBlock date={weather.dt} icon={weather.weather[0].icon} temperature={weather.main.temp} />
+            )}
+          </div>
         </div>
       )}
     </div>
