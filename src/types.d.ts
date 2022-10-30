@@ -10,5 +10,6 @@ export type Weather = {
 export type BlockProps = {
   date: number,
   icon: string,
-  temperature: number
+  temperature: number,
+  description: string
 }
