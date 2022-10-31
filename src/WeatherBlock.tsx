@@ -12,7 +12,7 @@ const WeatherBlock = ({ date, icon, temperature, description }: BlockProps) => {
         weekday: 'short',
       }).toString()}</div>
       <div className={`${isToday ? 'block__alternate' : 'block__main'}`} >
-        <img className='block__img' src={`${process.env.REACT_APP_WEATHER_ICON}/${icon}.png`} alt={description} />
+        <img className={`block__img ${isToday && 'block__img--large'}`} src={`${process.env.REACT_APP_WEATHER_ICON}/${icon}.png`} alt={description} />
         {isToday ? (
           <div>
             <div className='block__temp block__text--large'>{Math.round(temperature)}&deg;</div>
